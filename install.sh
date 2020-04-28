@@ -206,6 +206,10 @@ echo "installing httprobe"
 go get -u github.com/tomnomnom/httprobe 
 echo "done"
 
+echo "Installing ffuf"
+go get github.com/ffuf/ffuf
+echo "done"
+
 echo "installing unfurl"
 go get -u github.com/tomnomnom/unfurl 
 echo "done"
