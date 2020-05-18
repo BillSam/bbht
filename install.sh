@@ -23,7 +23,7 @@ echo "installing bash_profile aliases from recon_profile"
 git clone https://github.com/nahamsec/recon_profile.git
 cd recon_profile
 cat bash_profile >> ~/.bashrc
-source ~/.bash_profile
+source ~/.bashrc
 cd ~/tools/
 echo "done"
 
@@ -122,6 +122,18 @@ git clone https://github.com/nahamsec/lazys3.git
 cd ~/tools/
 echo "done"
 
+echo "Installing Photon"
+git clone https://github.com/s0md3v/Photon.git
+cd Photon
+pip3 install -r requirements.txt
+cd ~/tools/
+echo "done"
+
+echo "Installing dns"
+git clone https://github.com/rbsec/dnscan.git
+cd ~/tools/
+echo "done"
+
 echo "Installing ffufplus"
 git clone https://github.com/dark-warlord14/ffufplus.git
 go get -u -v github.com/ffuf/ffuf
@@ -210,6 +222,10 @@ echo "Installing ffuf"
 go get github.com/ffuf/ffuf
 echo "done"
 
+echo "Installing filter-resolved"
+go get github.com/tomnomnom/hacks/filter-resolved
+echo "done"
+
 echo "installing unfurl"
 go get -u github.com/tomnomnom/unfurl 
 echo "done"
@@ -217,6 +233,27 @@ echo "done"
 echo "installing waybackurls"
 go get github.com/tomnomnom/waybackurls
 echo "done"
+
+echo "Installing naabu"
+go get -v github.com/projectdiscovery/naabu/cmd/naabu
+echo "done"
+
+echo "installing gowitness"
+go get -u github.com/sensepost/gowitness
+echo "done"
+
+echo "Installing nuclei"
+GO111MODULE=on go get -u -v github.com/projectdiscovery/nuclei/cmd/nuclei
+echo "done"
+
+echo "Installing dnsprobe"
+GO111MODULE=on go get -u -v github.com/projectdiscovery/dnsprobe
+echo "done"
+
+echo "Installing nuclei/templates"
+cd ~/tools/
+git clone https://github.com/projectdiscovery/nuclei-templates.git
+echo "done!"
 
 echo "installing crtndstry"
 git clone https://github.com/nahamsec/crtndstry.git
