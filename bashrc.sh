@@ -1,3 +1,5 @@
+
+
 #----- AWS -------
 
 s3ls(){
@@ -170,27 +172,33 @@ fastRecon(){
 	mkdir fastRecon; cd fastRecon; mkdir screens;
 
 	echo "#enumerating subdomains"
-	subfinder -d $1 -silent -t 30 -o $1_domains;
+	subfinder -d $1 -silent -t 30 -o $1_domains.txt;
 
 	echo "#Fast port scanning"
 	#naabu -hL $1_domains -silent -t 30 -o $1_ports;
-	sudo ~/go/bin/naabu -hL $1_domains  -t 30 -o $1_ports
+	sudo ~/go/bin/naabu -hL $1_domains.txt  -t 30 -o $1_ports.txt
 
 	echo "# find web servers on open ports"
-	cat $1_ports | httprobe -c 30 > $1_schemes;
+	cat $1_ports.txt | httprobe -c 30 > $1_schemes.txt;
 
 	echo "#scan for subdomains takeover"
-	nuclei -c 30 -t ~/tools/nuclei-templates/subdomain-takeover/detect-all-takeovers.yaml -silent -o $1_takeovers -l $1_schemes;
+	nuclei -c 30 -t ~/tools/nuclei-templates/subdomain-takeover/detect-all-takeovers.yaml -silent -o $1_takeovers.txt -l $1_schemes.txt;
 
 	echo "# Get ips and cnames"
-	dnsprobe -l $1_domains -o  $1_ips -silent;
-	dnsprobe -l $1_domains -r CNAME -o $1_cnames -silent;
+	dnsprobe -l $1_domains.txt -o  $1_ips.txt -silent;
+	dnsprobe -l $1_domains.txt -r CNAME -o $1_cnames.txt -silent;
+
+	echo "# ips screenshot"
+	cat $1_ips.txt  | aquatone -chrome-path /snap/bin/chromium -out aqua_ips_out -silent
 
 	echo "#Taking screenshot"
-	gowitness file --source $1_schemes -d ./screens/ --chrome-path /snap/bin/chromium
+
+	gowitness file --source $1_schemes.txt -d ./screens/ --chrome-path /snap/bin/chromium
+
 	gowitness report generate;  
 
 }
+
 
 wayburp(){
 	#cat $1.txt | parallel -j 10 curl --proxy http://127.0.0.1:8080 -sk > /dev/null
@@ -220,6 +228,79 @@ brute2screen(){
 
 	mkdir brute; cd brute;
 
+
+}
+wayback(){
+	curl "https://web.archive.org/cdx/search/cdx?url=$1/*&output=text&fl=original&collapse=urlkey" > urls.txt
+	cat urls.txt | grep "$2"
+}
+
+rapidSubs(){
+
+}
+
+dnsGenper(){
+	cat domains.txt | dnsgen - | massdns -r /path/to/resolvers.txt -t A -o J --flush 2>/dev/null
+}
+
+hresponse(){
+	path=$(pwd)
+	cd $path
+	mkdir headers
+	mkdir responsebody
+	CURRENT_PATH=$(pwd)
+	for x in $(cat $1)
+		do
+    	    NAME=$(echo $x | awk -F/ '{print $3}')
+        	curl -X GET -H "X-Forwarded-For: evil.com" $x -I > "$CURRENT_PATH/headers/$NAME"
+        	curl -s -X GET -H "X-Forwarded-For: evil.com" -L $x > "$CURRENT_PATH/responsebody/$NAME"
+	done
+}
+
+jresponse(){
+	path=$(pwd)
+	cd $path
+	mkdir scripts
+	mkdir scriptsresponse
+	
+	RED='\033[0;31m'
+	NC='\033[0m'
+	CUR_PATH=$(pwd)
+	for x in $(ls "$CUR_PATH/responsebody")
+	do
+	        printf "\n\n${RED}$x${NC}\n\n"
+	        END_POINTS=$(cat "$CUR_PATH/responsebody/$x" | grep -Eoi "src=\"[^>]+></script>" | cut -d '"' -f 2)
+	        for end_point in $END_POINTS
+	        do
+	                len=$(echo $end_point | grep "http" | wc -c)
+	                mkdir "scriptsresponse/$x/"
+	                URL=$end_point
+	                if [ $len == 0 ]
+	                then
+	                        URL="https://$x$end_point"
+	                fi
+	                file=$(basename $end_point)
+	                curl -X GET $URL -L > "scriptsresponse/$x/$file"
+	                echo $URL >> "scripts/$x"
+	        done
+	done
+}
+
+eresponse(){
+	path=$(pwd)
+	cd $path
+	mkdir endpoints
+	
+	CUR_DIR=$(pwd)
+	for domain in $(ls scriptsresponse)
+	do
+	        #looping through files in each domain
+	        mkdir endpoints/$domain
+	        for file in $(ls scriptsresponse/$domain)
+	        do
+	                ruby ~/tools/relative-url-extractor/extract.rb scriptsresponse/$domain/$file >> endpoints/$domain/$file 
+	        done
+	done
 
 
 }
