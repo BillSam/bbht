@@ -76,13 +76,21 @@ sed -e "s/^/$value./" ~/tools/dnscan/tlds.txt | filter-resolved
 urlscanio(){
   path=$(pwd)
   cd $path
+  mkdir urlscan; cd urlscan;
+
   echo "Running urlscanio"
   gron "https://urlscan.io/api/v1/search/?q=domain:$1"  | grep 'url' | gron --ungron | tee $1urlio.txt
   echo "done"
 }
 
 substakeover() {
-subfinder -d $1 >> hosts | assetfinder -subs-only $1 >> hosts | amass enum -norecursive -noalts -d $1 >> hosts | subjack -w hosts -t 100 -timeout 30 -ssl -c ~/subjack/fingerprints.json -v 3 >> takeover 
+	path=$(pwd)
+  	cd $path
+	
+	mkdir subsover; cd subsover;
+	echo "Running subdomain takeover"
+	subfinder -d $1 >> hosts | assetfinder -subs-only $1 >> hosts | amass enum -norecursive -noalts -d $1 >> hosts | subjack -w hosts -t 100 -timeout 30 -ssl -c ~/subjack/fingerprints.json -v 3 >> takeover 
+	echo "Done Done Done"
 }
 
 #check known subs for takeovers
@@ -146,14 +154,20 @@ fetchAll(){
 }
 
 Blc() {
-subfinder -d $1 | httprobe | waybackurls | egrep -iv ".(jpg|gif|css|png|woff|pdf|svg|js)" | burl | tee brokenlink.txt
+	path=$(pwd)
+	cd $path
+	mkdir Blc; cd Blc;
+
+	subfinder -d $1 | httprobe | waybackurls | egrep -iv ".(jpg|gif|css|png|woff|pdf|svg|js)" | burl | tee brokenlink.txt
 }
 
 fastRecon(){
+
 	path=$(pwd)
 	cd $path
+	
 	echo "create unique folders"
-	mkdir $1; cd $1; mkdir screens;
+	mkdir fastRecon; cd fastRecon; mkdir screens;
 
 	echo "#enumerating subdomains"
 	subfinder -d $1 -silent -t 30 -o $1_domains;
@@ -173,7 +187,39 @@ fastRecon(){
 	dnsprobe -l $1_domains -r CNAME -o $1_cnames -silent;
 
 	echo "#Taking screenshot"
-	gowitness file --source $1_schemes -d ./screens/ -chrome-path /snap/bin/chromium
+	gowitness file --source $1_schemes -d ./screens/ --chrome-path /snap/bin/chromium
 	gowitness report generate;  
+
+}
+
+wayburp(){
+	#cat $1.txt | parallel -j 10 curl --proxy http://127.0.0.1:8080 -sk > /dev/null
+	path=$(pwd)
+	cd $path
+
+	mkdir waybackurls; cd waybackurls;
+	gau -subs $1 > gauway.txt
+	subfinder -d $1 | httprobe | waybackurls > wayback.txt
+
+	cat gauway.txt | sort -u >> allwayback.txt
+	cat wayback.txt | sort -u >> allwayback.txt
+
+	cat allwayback.txt | parallel -j 10 curl --proxy http://127.0.0.1:8080 -sk > /dev/null
+}
+
+Subfinder - > Amass - > Massdns subdomain bruteforce with wordlist - > 100 unique sub domains - > Aquatone 
+
+mass(){
+ ~/tools/massdns/scripts/subbrute.py ~/tools/SecLists/Discovery/DNS/clean-jhaddix-dns.txt $1 | ~/tools/massdns/bin/massdns -r ~/tools/massdns/lists/resolvers.txt -t A -q  -o S -w  ./$1_mass.txt
+}
+
+
+brute2screen(){
+	path=$(pwd)
+	cd $path
+
+	mkdir brute; cd brute;
+
+
 
 }
