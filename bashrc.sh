@@ -32,7 +32,14 @@ curl -s https://crt.sh/\?q\=\%.$1\&output\=json | jq -r '.[].name_value' | sed '
 }
 
 mscan(){ #runs masscan
-sudo masscan -p4443,2075,2076,6443,3868,3366,8443,8080,9443,9091,3000,8000,5900,8081,6000,10000,8181,3306,5000,4000,8888,5432,15672,9999,161,4044,7077,4040,9000,8089,443,744$}
+sudo masscan -p 4443,2075,2076,6443,3868,3366,8443,8080,9443,9091,3000,8000,5900,8081,6000,10000,8181,3306,5000,4000,8888,5432,15672,9999,161,4044,7077,4040,9000,8089,443,744 $
+}
+nscan(){
+
+	path=$(pwd)
+	cd $path
+
+	nmap -T 4 -iL $.txt	-Pn --script=http-title -p 80,4443,4080,443 --open
 }
 
 certspotter(){ 
@@ -215,10 +222,20 @@ wayburp(){
 	cat allwayback.txt | parallel -j 10 curl --proxy http://127.0.0.1:8080 -sk > /dev/null
 }
 
-Subfinder - > Amass - > Massdns subdomain bruteforce with wordlist - > 100 unique sub domains - > Aquatone 
 
 mass(){
  ~/tools/massdns/scripts/subbrute.py ~/tools/SecLists/Discovery/DNS/clean-jhaddix-dns.txt $1 | ~/tools/massdns/bin/massdns -r ~/tools/massdns/lists/resolvers.txt -t A -q  -o S -w  ./$1_mass.txt
+}
+
+githoud(){
+	path=$(pwd)
+	cd $path
+
+	mkdir githoud; cd githoud;
+	echo "Finding subdomains..."
+	subfinder -d $1 -silent -t 30 -o $1_domains.txt;
+	cat $1_domains.txt | ~/tools/git-hound 
+
 }
 
 
@@ -302,5 +319,55 @@ eresponse(){
 	        done
 	done
 
+
+}
+
+recon(){
+
+	path=$(pwd)
+	cd $path
+
+  echo "Recon started on $1"
+  echo "Listing subdomains using sublister..."
+  python ~/tools/Sublist3r/sublist3r.py -d $1 -t 10 -v -o ./$1.s.txt > /dev/null
+  echo "Listing subdomains using subfinder.."
+  subfinder -d $1 -o ./$1.sf.txt
+  echo "Listing subdomains using findomain..."
+  findomain-linux -t $1 -u ./$1.f.txt > /dev/null
+  echo "Listing subdomains using assetfinder"
+  assetfinder --subs-only $1 | sort -u > ./$1.a.txt
+
+  cat ./$1.s.txt | sort -u > ./$1.txt
+  cat ./$1.f.txt | sort -u > ./$1.txt
+  cat ./$1.a.txt | sort -u > ./$1.txt
+  cat ./$1.sf.txt | sort -u > ./$1.txt
+
+	cat $1.txt | httprobe | tee -a ./$1_alive.txt
+    
+  # echo "Checking certspotter..."
+  # curl -s https://certspotter.com/api/v0/certs\?domain\=$domain | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep $domain >> ./$1_crt.txt
+  # cat ./$1_crt.txt | sort -u > ./$1.txt
+
+}
+
+dirs(){
+	path=$(pwd)
+	cd $path
+
+	name=$(echo $1 | unfurl -u domains)
+	x=$(date +%Y%m%d%H%M%S)
+
+	mkdir -p Reports
+	mkdir -p Reports/$name
+
+	ffuf -w ~/tools/dirsearch/db/dicc.txt -u $1FUZZ -D -e asp,aspx,cgi,cfml,CFM,htm,html,json,jsp,php,phtml,pl,py,sh,shtml,sql,txt,xml,xhtml,tar,tar.gz,tgz,war,zip,swp,src,jar,java,log,bin,js,db -t 150 -o ./Reports/$name/$name_$x.json
+
+	~/tools/stuf.sh/stuf.sh ./Reports/$name/$name_$x.json 200 | tee -a ./Reports/$name/$name_$x.txt
+	~/tools/stuf.sh/stuf.sh ./Reports/$name/$name_$x.json 204 | tee -a ./Reports/$name/$name_$x.txt
+	~/tools/stuf.sh/stuf.sh ./Reports/$name/$name_$x.json 301 | tee -a ./Reports/$name/$name_$x.txt
+	~/tools/stuf.sh/stuf.sh ./Reports/$name/$name_$x.json 302 | tee -a ./Reports/$name/$name_$x.txt
+	~/tools/stuf.sh/stuf.sh ./Reports/$name/$name_$x.json 307 | tee -a ./Reports/$name/$name_$x.txt  
+	~/tools/stuf.sh/stuf.sh ./Reports/$name/$name_$x.json 401 | tee -a ./Reports/$name/$name_$x.txt
+	~/tools/stuf.sh/stuf.sh ./Reports/$name/$name_$x.json 403 | tee -a ./Reports/$name/$name_$x.txt
 
 }

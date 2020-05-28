@@ -176,7 +176,10 @@ python3 setup.py install
 cd ~/tools/
 echo "done installing linkFinder"
 
-
+echo "Installing git-hound"
+wget https://github.com/tillson/git-hound/releases/download/v1.2.1/git-hound_1.2.1_Linux_x86_64.tar.gz
+tar -xzf git-hound_1.2.1_Linux_x86_64.tar.gz
+echo "done"   
 
 echo "installing nmap"
 sudo apt-get install -y nmap
@@ -255,6 +258,10 @@ cd ~/tools/
 git clone https://github.com/projectdiscovery/nuclei-templates.git
 echo "done!"
 
+echo "installing stuf.sh"
+git clone https://github.com/squelch0/stuf.sh.git
+echo "done"
+
 echo "installing crtndstry"
 git clone https://github.com/nahamsec/crtndstry.git
 echo "done"
@@ -268,7 +275,7 @@ cat dns-Jhaddix.txt | head -n -14 > clean-jhaddix-dns.txt
 cd ~/tools/
 echo "done"
 
-
+echo ~/.githound/config.yml
 
 echo -e "\n\n\n\n\n\n\n\n\n\n\nDone! All tools are set up in ~/tools"
 ls -la
